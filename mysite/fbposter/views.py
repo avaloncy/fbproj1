@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
@@ -41,3 +41,22 @@ def post_new(request):
     else:
         form = EntryForm()
     return render(request, 'post_edit.html', {'form':form})
+
+@login_required
+def post_edit(request, slug):
+    post = get_object_or_404(models.Entry, slug=slug)
+    if request.user != post.author:
+        return redirect('myposts')
+
+    if request.method == "POST":
+        form = EntryForm(request.POST, instance=post)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            post.published_date = timezone.now()
+            post.save()
+            form.save_m2m()
+            return redirect('post', slug=post.slug)
+    else:
+        form = EntryForm(instance=post)
+    return render(request, 'post_edit.html', {'form': form})
