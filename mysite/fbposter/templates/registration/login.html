@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+<form method="post" action=".">
+    <input type="hidden" name="next" value="/"><!-- login.html must send "next" parameter, and "next" parameter value is url that you want to redirect.  -->
+</form>
+{% block blog_content %}
+  <h2>Login</h2>
+  <a href="{% url 'social:begin' 'facebook' %}">Login with Facebook</a>
+{% endblock %}
