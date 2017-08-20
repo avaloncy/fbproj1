@@ -283,7 +283,8 @@ header.masthead {
   color: #0085A1; }
 
 form .form-group:first-child .floating-label-form-group {
-  border-top: 1px solid #eeeeee; }
+  border-top: 1px solid #eeeeee; 
+}
 
 footer {
   padding: 50px 0 65px; }

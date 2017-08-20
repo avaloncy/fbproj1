@@ -1,15 +1,25 @@
 {% extends "base.html" %}
 
 {% block blog_content %}
-	<div class="post">
-		<h2><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></h2>
-		<p class="meta">
-			{{ object.created }} | 
-			Tagged under {{ object.tags.all|join:", " }}
-		</p>
-		{% if user.is_authenticated and user == object.author %}
-			<a class="btn btn-default" href="{% url 'post_edit' slug=object.slug %}"><span class="glyphicon glyphicon-pencil"></span></a>
-		{% endif %}
-		{{ object.body }}
-	</div>
+    <div class="post">
+        <h2><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></h2>
+        <p class="meta">
+            {{ object.created }} | 
+            Tagged under {{ object.tags.all|join:", " }}
+        </p>
+        {{ object.body }}
+        <hr/>
+
+        {% if user.is_authenticated and user == object.author %}
+        <a class="btn {% if object.post_to_fb %}btn-warning{% else %}btn-success{% endif %}" href="{% url 'change_post_to_fb' slug=object.slug%}">{% if object.post_to_fb %}Remove Post from Facebook{% else %}Post to Facebook{% endif %}</a>
+        <a class="btn btn-primary" href="{% url 'post_edit' slug=object.slug %}">Edit</a>
+        <a class="btn btn-danger" href="{% url 'post_delete' slug=object.slug %}">Delete</a>
+        {% endif %}
+    </div>
 {% endblock %}
+
+<!-- 
+        <form method="POST" class="form-inline" action={% url 'change_post_to_fb' slug=object.slug%}>
+            {% csrf_token %}
+            <button type="submit" class="btn {% if object.post_to_fb %}btn-warning{% else %}btn-success{% endif %}">{% if object.post_to_fb %}Remove Post from Facebook{% else %}Post to Facebook{% endif %}</button>
+        </form> -->

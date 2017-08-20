@@ -30,8 +30,10 @@ class Entry(models.Model):
 
 	objects = EntryQuerySet.as_manager()
 
-	publish_to_fb = models.BooleanField(default=True)
-	publish_to_fb_date = models.DateTimeField(blank=True, null=True)
+	post_to_fb = models.BooleanField(default=False)
+	post_to_fb_public = models.BooleanField(default=True)
+	post_to_fb_date = models.DateTimeField(blank=True, null=True)
+	post_to_fb_id = models.CharField(max_length=200, null=True)
 
 	def __str__(self):
 		return self.title
