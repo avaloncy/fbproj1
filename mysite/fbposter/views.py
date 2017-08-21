@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.views import generic
 from django.utils import timezone
+from django.urls import reverse
 
 from . import models
 from .forms import EntryForm
@@ -19,7 +20,6 @@ class BlogIndex(generic.ListView):
     queryset = models.Entry.objects.public()
     template_name="blog.html"
     paginate_by = 3
-
 
 class BlogIndexPrivate(LoginRequiredMixin, generic.ListView):
     template_name="blog_private.html"
@@ -42,18 +42,13 @@ def post_new(request):
             
             #Post to facebook if needed
             if post.post_to_fb == True:
-                social = request.user.social_auth.first()
-                access_token = social.extra_data['access_token']
-                graph = facebook.GraphAPI(access_token)
+                graph = get_fb_api(request.user)
 
-                privacy = {
-                    'value' : 'EVERYONE'
-                };
-                if not post.post_to_fb_public:
-                    privacy['value'] = "SELF"
+                post.save()
 
-                #result = graph.put_object('', '323621744766235', message=post.title )                
-                result = graph.put_object('me', 'feed', message=post.title, privacy=json.dumps(privacy) )
+                result = graph.put_object(get_page_id(), 'feed', message=post.title,
+                                                                 link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
+                                                                 published = post.post_to_fb_public )
 
                 post.post_to_fb_date = timezone.now()
                 post.post_to_fb_id = result['id'];
@@ -81,31 +76,18 @@ def post_edit(request, slug):
             post.author = request.user
             post.published_date = timezone.now()
 
-            privacy = {
-                'value' : 'EVERYONE'
-            };
-            if not post.post_to_fb_public:
-                privacy['value'] = "SELF"
-
             #Post to facebook if needed
             if old_post.post_to_fb == True:
-                social = request.user.social_auth.first()
-                access_token = social.extra_data['access_token']
-                graph = facebook.GraphAPI(access_token)
+                graph = get_fb_api( request.user )
 
                 if post.post_to_fb == True:
-                    graph.put_object(post.post_to_fb_id, "", message=post.title, privacy=json.dumps(privacy) )
+                    graph.put_object(post.post_to_fb_id, "", message=post.title, published=post.post_to_fb_public )
                 else:
                     graph.delete_object(id=post.post_to_fb_id)
             else:
                 if post.post_to_fb == True: 
-                    social = request.user.social_auth.first()
-                    access_token = social.extra_data['access_token']
-                    graph = facebook.GraphAPI(access_token)
-
-                    #result = graph.put_object('', '323621744766235', message=post.title )                
-                    result = graph.put_object('me', 'feed', message=post.title, privacy=json.dumps(privacy) )
-
+                    graph = get_fb_api( request.user )      
+                    result = graph.put_object(get_page_id(), 'feed', message=post.title, published=post.post_to_fb_public )
                     post.post_to_fb_date = timezone.now()
                     post.post_to_fb_id = result['id'];
 
@@ -123,10 +105,8 @@ def post_delete(request, slug):
     if request.user != post.author:
         return redirect('myposts')
 
-    if post.post_to_fb == True:      
-        social = request.user.social_auth.first()
-        access_token = social.extra_data['access_token']
-        graph = facebook.GraphAPI(access_token)
+    if post.post_to_fb == True:
+        graph = get_fb_api( request.user )
         graph.delete_object(id=post.post_to_fb_id)
 
     post.delete()
@@ -139,9 +119,7 @@ def change_post_to_fb(request, slug):
     if request.user != post.author:
         return redirect('post', slug=post.slug)
 
-    social = request.user.social_auth.first()
-    access_token = social.extra_data['access_token']
-    graph = facebook.GraphAPI(access_token)
+    graph = get_fb_api( request.user )
     if post.post_to_fb == True:
         graph.delete_object(id=post.post_to_fb_id)
         post.post_to_fb = False;
@@ -152,11 +130,29 @@ def change_post_to_fb(request, slug):
         };
         if not post.post_to_fb_public:
             privacy['value'] = "SELF"
-        result = graph.put_object('me', 'feed', message=post.title, privacy=json.dumps(privacy) )
+        result = graph.put_object(get_page_id, 'feed', message=post.title ) #, privacy=json.dumps(privacy) )
         post.post_to_fb_date = timezone.now()
         post.post_to_fb_id = result['id']
         post.post_to_fb = True
 
     post.save()
-        
+
     return redirect('post', slug=post.slug)
+
+def get_fb_api( user ):
+    social = user.social_auth.first()
+    access_token = social.extra_data['access_token']
+
+    graph = facebook.GraphAPI(access_token)
+    # Get page token to post as the page. You can skip 
+    # the following if you want to post as yourself. 
+    resp = graph.get_object('me/accounts')
+    page_access_token = None
+    for page in resp['data']:
+        if page['id'] == get_page_id():
+            page_access_token = page['access_token']
+    graph = facebook.GraphAPI(page_access_token)
+    return graph
+
+def get_page_id():
+    return '323621744766235'

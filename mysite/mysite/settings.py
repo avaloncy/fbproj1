@@ -25,7 +25,7 @@ SECRET_KEY = 'i8d0*n*rx8q1*x*%vlxz3k%5dp#hd9x04#_ti2jq-19a!xch25'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.fbposter.com','localhost','127.0.0.1']
 
 
 # Application definition
