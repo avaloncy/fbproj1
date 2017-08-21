@@ -48,6 +48,9 @@
               <a class="nav-link" href="{% url "post_new" %}">New Post</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="{% url "insights" %}">Insights</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="{% url "logout" %}">Logout</a>
             </li>
 
@@ -90,6 +93,11 @@
               <a class="btn btn-primary btn-lg" {% if page_obj.has_next %}href="?page={{ page_obj.next_page_number }}"{% else %}disabled{% endif %}>Next</a>
             </div>
           {% endif %}
+        </div><!-- /.blog-main -->
+
+        <div class="col-xs-2 col-xs-2 mx-auto">
+          {% block insight_content %} {% endblock %}
+          <br/>
         </div><!-- /.blog-main -->
 
       </div><!-- /.row -->

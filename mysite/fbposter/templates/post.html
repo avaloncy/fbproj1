@@ -6,7 +6,9 @@
         <p class="meta">
             {{ object.created }} | 
             Tagged under {{ object.tags.all|join:", " }}
+            Facebook Insights: Reach {{ object.post_to_fb_reachs }} | Click {{ object.post_to_fb_clicks }}
         </p>
+        <hr/>
         {{ object.body }}
         <hr/>
 
@@ -17,9 +19,3 @@
         {% endif %}
     </div>
 {% endblock %}
-
-<!-- 
-        <form method="POST" class="form-inline" action={% url 'change_post_to_fb' slug=object.slug%}>
-            {% csrf_token %}
-            <button type="submit" class="btn {% if object.post_to_fb %}btn-warning{% else %}btn-success{% endif %}">{% if object.post_to_fb %}Remove Post from Facebook{% else %}Post to Facebook{% endif %}</button>
-        </form> -->

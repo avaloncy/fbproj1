@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block insight_content %}
+<div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Post Date</th>
+            <th>Published</th>
+            <th>Reach</th>
+            <th>Click</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for object in allposts %}
+        <tr class={% if object.post_to_fb_public %}'table-success'{% else %}'table-active'{% endif %}>
+            <td><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></td>
+            <td>{{ object.post_to_fb_date }}</td>
+            <td>{% if object.post_to_fb_public %}Published{% else %}Unpublished{% endif %}</td>
+            <td>{{ object.post_to_fb_reachs }}</td>
+            <td>{{ object.post_to_fb_actions }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tag</th>
+            <th>Num of Posts</th>
+            <th>Reach</th>
+            <th>Click</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for tag_result in tag_results %}
+        <tr>
+            <td>{{ tag_result.tag }}</td>
+            <td>{{ tag_result.num_of_posts }}</td>
+            <td>{{ tag_result.fb_reachs }}</td>
+            <td>{{ tag_result.fb_actions }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% for tag_result in tag_results %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Post Date</th>
+            <th>Published</th>
+            <th>Reach</th>
+            <th>Click</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for object in tag_result.data %}
+        <tr class={% if object.post_to_fb_public %}'table-success'{% else %}'table-active'{% endif %}>
+            <td><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></td>
+            <td>{{ object.post_to_fb_date }}</td>
+            <td>{% if object.post_to_fb_public %}Published{% else %}Unpublished{% endif %}</td>
+            <td>{{ object.post_to_fb_reachs }}</td>
+            <td>{{ object.post_to_fb_actions }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+
+</div>
+
+{% endblock %}

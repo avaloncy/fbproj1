@@ -17,6 +17,10 @@ class EntryQuerySet(models.QuerySet):
 		return self.filter(public=True)
 	def by_user(self, user):
 		return self.filter(author=user)
+	def fb_posts_by_all(self):
+		return self.filter(post_to_fb=True)
+	def fb_posts_by_user(self, user):
+		return self.filter( post_to_fb=True, author=user )
 
 class Entry(models.Model):
 	author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
@@ -31,10 +35,15 @@ class Entry(models.Model):
 
 	objects = EntryQuerySet.as_manager()
 
+	# Fb basics
 	post_to_fb = models.BooleanField(default=False)
 	post_to_fb_public = models.BooleanField(default=True)
 	post_to_fb_date = models.DateTimeField(blank=True, null=True)
 	post_to_fb_id = models.CharField(max_length=200, null=True)
+
+	# Fb matrics
+	post_to_fb_reachs = models.IntegerField(default=0, null=True)
+	post_to_fb_actions = models.IntegerField(default=0, null=True)
 
 	def __str__(self):
 		return self.title

@@ -27,9 +27,25 @@ class BlogIndexPrivate(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         return models.Entry.objects.by_user(self.request.user)
 
-class BlogDetail(generic.DetailView):
-    model = models.Entry
-    template_name = "post.html"
+def post_detail(request, slug):
+    post = get_object_or_404(models.Entry, slug=slug)
+
+    # Only the author can see the fb metric from the post detail
+    if request.user.is_authenticated() and request.user == post.author:
+        try:
+            graph = get_fb_api( request.user )
+            result = graph.get_object( post.post_to_fb_id + "/insights", metric='post_fan_reach,post_reactions_like_total')
+            print(result)
+            for metric in result['data']:
+                if metric['name'] == 'post_fan_reach':
+                    post.post_to_fb_reachs = get_metric_value( metric )
+                elif metric['name'] == 'post_reactions_like_total':
+                    post.post_to_fb_actions = get_metric_value( metric )
+        except:
+            post.post_to_fb_reachs = -1
+            post.post_to_fb_actions = -1
+    return render(request, 'post.html', {'object': post})
+
 
 @login_required
 def post_new(request):
@@ -39,21 +55,24 @@ def post_new(request):
             post = form.save(commit=False)
             post.author = request.user
             post.published_date = timezone.now()
-            
+            post.save()
+
             #Post to facebook if needed
             if post.post_to_fb == True:
-                graph = get_fb_api(request.user)
+                try:
+                    graph = get_fb_api(request.user)
+                    result = graph.put_object(get_page_id(), 'feed', message=post.title,
+                                                                     link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
+                                                                     published = post.post_to_fb_public )
 
-                post.save()
+                    post.post_to_fb_date = timezone.now()
+                    post.post_to_fb_id = result['id']
+                    post.save()
+                except:
+                    print("Failed to post to fb.")
+                    post.post_to_fb = False
+                    post.save()
 
-                result = graph.put_object(get_page_id(), 'feed', message=post.title,
-                                                                 link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
-                                                                 published = post.post_to_fb_public )
-
-                post.post_to_fb_date = timezone.now()
-                post.post_to_fb_id = result['id'];
-
-            post.save()
             form.save_m2m()
 
             return redirect('post', slug=post.slug)
@@ -78,18 +97,30 @@ def post_edit(request, slug):
 
             #Post to facebook if needed
             if old_post.post_to_fb == True:
-                graph = get_fb_api( request.user )
-
                 if post.post_to_fb == True:
-                    graph.put_object(post.post_to_fb_id, "", message=post.title, published=post.post_to_fb_public )
+                    try:
+                        graph = get_fb_api( request.user )
+                        graph.put_object(post.post_to_fb_id, "", message=post.title, is_published=post.post_to_fb_public )
+                    except:
+                        pass
                 else:
-                    graph.delete_object(id=post.post_to_fb_id)
+                    try:
+                        graph = get_fb_api( request.user )
+                        graph.delete_object(id=post.post_to_fb_id)
+                        post.post_to_fb_id = None
+                    except:
+                        post.post_to_fb = True
             else:
                 if post.post_to_fb == True: 
-                    graph = get_fb_api( request.user )      
-                    result = graph.put_object(get_page_id(), 'feed', message=post.title, published=post.post_to_fb_public )
-                    post.post_to_fb_date = timezone.now()
-                    post.post_to_fb_id = result['id'];
+                    try:
+                        graph = get_fb_api( request.user )
+                        result = graph.put_object(get_page_id(), 'feed', message=post.title,
+                                                                         link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
+                                                                         published = post.post_to_fb_public )
+                        post.post_to_fb_date = timezone.now()
+                        post.post_to_fb_id = result['id'];
+                    except:
+                        post.post_to_fb = False
 
             post.save()
             form.save_m2m()
@@ -106,8 +137,11 @@ def post_delete(request, slug):
         return redirect('myposts')
 
     if post.post_to_fb == True:
-        graph = get_fb_api( request.user )
-        graph.delete_object(id=post.post_to_fb_id)
+        try:
+            graph = get_fb_api( request.user )
+            graph.delete_object(id=post.post_to_fb_id)
+        except:
+            pass
 
     post.delete()
     return redirect('myposts')
@@ -121,19 +155,22 @@ def change_post_to_fb(request, slug):
 
     graph = get_fb_api( request.user )
     if post.post_to_fb == True:
-        graph.delete_object(id=post.post_to_fb_id)
-        post.post_to_fb = False;
-        post.post_to_fb_id = None
-    else:      
-        privacy = {
-            'value' : 'EVERYONE'
-        };
-        if not post.post_to_fb_public:
-            privacy['value'] = "SELF"
-        result = graph.put_object(get_page_id, 'feed', message=post.title ) #, privacy=json.dumps(privacy) )
-        post.post_to_fb_date = timezone.now()
-        post.post_to_fb_id = result['id']
-        post.post_to_fb = True
+        try:
+            graph.delete_object(id=post.post_to_fb_id)
+            post.post_to_fb = False
+            post.post_to_fb_id = None
+        except:
+            pass
+    else:
+        try:
+            result = graph.put_object(get_page_id(), 'feed', message=post.title,
+                                                             link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
+                                                             published = post.post_to_fb_public )
+            post.post_to_fb_date = timezone.now()
+            post.post_to_fb_id = result['id']
+            post.post_to_fb = True
+        except:
+            pass
 
     post.save()
 
@@ -156,3 +193,53 @@ def get_fb_api( user ):
 
 def get_page_id():
     return '323621744766235'
+
+def get_metric_value( metric ):
+    if not 'values' in metric:
+        return -1
+    values = metric['values']
+    if values == None or len(values) == 0:
+        return -1
+    return values[0]['value']
+
+
+@login_required
+def post_insights(request):
+    posts = models.Entry.objects.fb_posts_by_user(request.user)
+
+    ids = [post.post_to_fb_id for post in posts if post.post_to_fb_id is not None]
+    try:
+        graph = get_fb_api( request.user )
+        result = graph.get_object( "insights", ids=','.join(ids),
+                                    metric='post_fan_reach,post_reactions_like_total')
+    except:
+        print("Failed to query insights from facebook")
+        result = {}
+
+    print(result)
+    for post in posts:
+        if post.post_to_fb_id in result:
+            for metric in result[post.post_to_fb_id]['data']:
+                if metric['name'] == 'post_fan_reach':
+                    post.post_to_fb_reachs = get_metric_value( metric )
+                elif metric['name'] == 'post_reactions_like_total':
+                    post.post_to_fb_actions = get_metric_value( metric )
+        else:
+            post.post_to_fb_reachs = -1
+            post.post_to_fb_actions = -1
+        post.save()
+
+    #insight on tags
+    tags_of_interest = ['General','Tech']
+    tag_results = []
+    for tag in tags_of_interest:
+        target_posts = posts.filter(tags__slug=tag)
+        tag_result = {}
+        tag_result['tag'] = tag
+        tag_result['num_of_posts'] = len(target_posts)
+        tag_result['data'] = target_posts
+        tag_result['fb_reachs'] = sum([post.post_to_fb_reachs for post in target_posts if post.post_to_fb_reachs >= 0])
+        tag_result['fb_actions'] = sum([post.post_to_fb_actions for post in target_posts if post.post_to_fb_actions >= 0])
+        tag_results.append(tag_result)
+    print(tag_results)
+    return render(request, 'insights.html', {'allposts':posts, 'tag_results':tag_results})
