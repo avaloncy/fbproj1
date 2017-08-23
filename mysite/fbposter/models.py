@@ -25,6 +25,7 @@ class EntryQuerySet(models.QuerySet):
 class Entry(models.Model):
 	author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
 	title=models.CharField(max_length=200)
+	description=models.TextField()
 	body=models.TextField()
 	slug=models.SlugField(max_length=200, unique=True)
 	public = models.BooleanField(default=True)

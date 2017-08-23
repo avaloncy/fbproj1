@@ -2,10 +2,12 @@
 
 {% block insight_content %}
 <div>
+<h3>Overview</h3>
 <table class="table">
     <thead>
         <tr>
             <th>Title</th>
+            <th>Author</th>
             <th>Post Date</th>
             <th>Published</th>
             <th>Reach</th>
@@ -17,6 +19,7 @@
     {% for object in allposts %}
         <tr class={% if object.post_to_fb_public %}'table-success'{% else %}'table-active'{% endif %}>
             <td><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></td>
+            <td>{{ object.author.first_name }} {{ object.author.last_name }}</td>
             <td>{{ object.post_to_fb_date }}</td>
             <td>{% if object.post_to_fb_public %}Published{% else %}Unpublished{% endif %}</td>
             <td>{{ object.post_to_fb_reachs }}</td>
@@ -27,8 +30,76 @@
 </table>
 </div>
 
-<div>
+<hr/>
+<br/>
 
+
+<div>
+<h3>Published Posts</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Post Date</th>
+            <th>Reach</th>
+            <th>Click</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for object in allposts %}
+        {% if object.post_to_fb_public %}
+        <tr>
+            <td><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></td>
+            <td>{{ object.author.first_name }} {{ object.author.last_name }}</td>
+            <td>{{ object.post_to_fb_date }}</td>
+            <td>{{ object.post_to_fb_reachs }}</td>
+            <td>{{ object.post_to_fb_actions }}</td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<hr/>
+<br/>
+
+<div>
+<h3>Unpublished Posts</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Post Date</th>
+            <th>Reach</th>
+            <th>Click</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for object in allposts %}
+        {% if not object.post_to_fb_public %}
+        <tr>
+            <td><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></td>
+            <td>{{ object.author.first_name }} {{ object.author.last_name }}</td>
+            <td>{{ object.post_to_fb_date }}</td>
+            <td>{{ object.post_to_fb_reachs }}</td>
+            <td>{{ object.post_to_fb_actions }}</td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<hr/>
+<br/>
+
+<div>
+<h3>Summary on Tags</h3>
 <table class="table">
     <thead>
         <tr>
@@ -51,6 +122,10 @@
     </tbody>
 </table>
 
+<hr/>
+<br/>
+
+<!-- 
 {% for tag_result in tag_results %}
 <table class="table">
     <thead>
@@ -75,7 +150,7 @@
     {% endfor %}
     </tbody>
 </table>
-{% endfor %}
+{% endfor %} -->
 
 </div>
 

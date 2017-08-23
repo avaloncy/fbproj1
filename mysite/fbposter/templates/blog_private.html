@@ -3,12 +3,14 @@
 {% block blog_content %}
 {% for object in object_list %}
 	<div class="post">
-		<h2><a href="{% url "post" slug=object.slug %}">{{ object.title }}</a></h2>
-		<p class="meta">
-			{{ object.created }} | 
-			Tagged under {{ object.tags.all|join:", " }}
+		<a href="{% url "post" slug=object.slug %}">
+			<h2 class="post-title">{{ object.title }}</h2>
+			<h5 class="post-subtitle">{{ object.description }}</h5>
+		</a>
+		<p class="post-meta">
+			{{ object.created.date }} | Tagged under {{ object.tags.all|join:", " }}
 		</p>
-		{{ object.body }}
 	</div>
+	<hr/>
 {% endfor %}
 {% endblock %}

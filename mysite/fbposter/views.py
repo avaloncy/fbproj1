@@ -61,7 +61,7 @@ def post_new(request):
             if post.post_to_fb == True:
                 try:
                     graph = get_fb_api(request.user)
-                    result = graph.put_object(get_page_id(), 'feed', message=post.title,
+                    result = graph.put_object(get_page_id(), 'feed', message=fb_post_message(post),
                                                                      link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
                                                                      published = post.post_to_fb_public )
 
@@ -100,7 +100,7 @@ def post_edit(request, slug):
                 if post.post_to_fb == True:
                     try:
                         graph = get_fb_api( request.user )
-                        graph.put_object(post.post_to_fb_id, "", message=post.title, is_published=post.post_to_fb_public )
+                        graph.put_object(post.post_to_fb_id, "", message=fb_post_message(post), is_published=post.post_to_fb_public )
                     except:
                         pass
                 else:
@@ -114,7 +114,7 @@ def post_edit(request, slug):
                 if post.post_to_fb == True: 
                     try:
                         graph = get_fb_api( request.user )
-                        result = graph.put_object(get_page_id(), 'feed', message=post.title,
+                        result = graph.put_object(get_page_id(), 'feed', message=fb_post_message(post),
                                                                          link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
                                                                          published = post.post_to_fb_public )
                         post.post_to_fb_date = timezone.now()
@@ -163,7 +163,7 @@ def change_post_to_fb(request, slug):
             pass
     else:
         try:
-            result = graph.put_object(get_page_id(), 'feed', message=post.title,
+            result = graph.put_object(get_page_id(), 'feed', message=fb_post_message(post),
                                                              link="http://www.fbposter.com:8000/" + reverse('post', kwargs={"slug": post.slug}), 
                                                              published = post.post_to_fb_public )
             post.post_to_fb_date = timezone.now()
@@ -192,7 +192,7 @@ def get_fb_api( user ):
     return graph
 
 def get_page_id():
-    return '323621744766235'
+    return '179820319228206'
 
 def get_metric_value( metric ):
     if not 'values' in metric:
@@ -202,6 +202,8 @@ def get_metric_value( metric ):
         return -1
     return values[0]['value']
 
+def fb_post_message(post):
+    return post.title + " -- " + post.description
 
 @login_required
 def post_insights(request):
@@ -230,7 +232,7 @@ def post_insights(request):
         post.save()
 
     #insight on tags
-    tags_of_interest = ['General','Tech']
+    tags_of_interest = ['JonSnow','DaenerysTargaryen','WhiteWalker']
     tag_results = []
     for tag in tags_of_interest:
         target_posts = posts.filter(tags__slug=tag)

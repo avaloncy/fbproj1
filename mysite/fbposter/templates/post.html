@@ -6,9 +6,12 @@
         <p class="meta">
             {{ object.created }} | 
             Tagged under {{ object.tags.all|join:", " }}
-            Facebook Insights: Reach {{ object.post_to_fb_reachs }} | Click {{ object.post_to_fb_clicks }}
+        </p>
+        <p class="meta">
+            Facebook Insights: Reach {{ object.post_to_fb_reachs }} | Click {{ object.post_to_fb_actions }}
         </p>
         <hr/>
+        <h4>{{ object.description }}</h4>
         {{ object.body }}
         <hr/>
 
